@@ -8,12 +8,15 @@ import { RatingStep } from "@/components/rating-step";
 import { FinalImageStep } from "@/components/final-image-step";
 import { generateInitialImages, generateFinalImage, ImageResponse } from "@/lib/api";
 
-// --- [NEW] Import the new component and Tabs ---
-import { AnalysisStep } from "@/components/analysis-step";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// --- DEFAULT VALUES FOR THE FORM ---
+const defaultBasePrompt = `Project Brief: OPDIVO Qvantig Advertisement
+Core Concept: The image presents a clean, professional advertisement for OPDIVO Qvantig. The central visual is a photorealistic syringe, positioned horizontally. Instead of being filled with liquid, the glass barrel contains a warm, inviting scene of an elderly couple relaxing in their living room, symbolizing the quality of life the treatment aims to provide.
+Layout & Branding:
+Top Left: The branding "OPDIVO Qvantig™" is prominent in a bold, dark blue sans-serif font, with a signature orange swoosh. Below this, in a smaller grey font, are the generic name ("nivolumab + hyaluronidase-nvhy") and "dosage details".
+Key Visual Elements:
+The Syringe: This is the hero element. It must look sterile and high-tech. The glass barrel is perfectly clear, containing the miniature scene. The left end shows an abstract blend of orange, black, and teal colors representing the medication. The right end features a detailed, translucent teal plastic hub and a sharp, metallic needle.
+The Miniature Scene: Inside the syringe, depict an elderly couple sitting comfortably on a beige sofa in a bright, modern living room. The scene should feel warm and happy, using natural tones with pops of orange and blue in the pillows to connect with the branding colors.`;
 
-// --- DEFAULT VALUES FOR THE FORM (UNCHANGED) ---
-const defaultBasePrompt = `Project Brief: OPDIVO Qvantig Advertisement...`; // (Your full prompt here)
 const defaultAttributes = [
     { "typography": "The overall feel of the text is modern, clean, and clinical.", "background and color palette": "The background is a simple, soft gradient of light grey and pale blue, creating a clean, clinical feel.", "overall mood": "The final image must balance a sterile, professional aesthetic with a message of warmth, hope, and a return to normal life." },
     { "typography": "The typography has a humanistic and accessible feel, using a slightly rounded sans-serif font.", "background and color palette": "The background is a warm, creamy off-white with a soft, out-of-focus golden light.", "overall mood": "The final image feels overwhelmingly optimistic and reassuring." },
@@ -21,18 +24,19 @@ const defaultAttributes = [
 ];
 
 export default function Home() {
-  // --- State for Image Optimization (UNCHANGED) ---
   const [appStep, setAppStep] = useState("prompt");
   const [isLoading, setIsLoading] = useState(false);
   const [initialImages, setInitialImages] = useState<ImageResponse[]>([]);
   const [finalImageUrl, setFinalImageUrl] = useState("");
+
+  // NEW: State for the editable prompt and attributes, initialized with defaults
   const [basePrompt, setBasePrompt] = useState(defaultBasePrompt);
   const [attributes, setAttributes] = useState(defaultAttributes);
 
-  // --- Handlers for Image Optimization (UNCHANGED) ---
   const handleInitialGeneration = async () => {
     setIsLoading(true);
     try {
+      // Now we pass the current state of the attributes to the API
       const images = await generateInitialImages(basePrompt, attributes);
       setInitialImages(images);
       setAppStep("rating");
@@ -61,45 +65,33 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center p-12 bg-gray-50">
       <div className="w-full max-w-4xl">
-        <h1 className="text-4xl font-bold text-center mb-2">Creative AI Suite</h1>
+        <h1 className="text-4xl font-bold text-center mb-2">Image Optimizer AI</h1>
         <p className="text-center text-gray-600 mb-8">
-          Optimize your creative prompts or analyze existing assets with AI.
+          Refine your vision. Let AI generate the perfect image based on your feedback.
         </p>
 
-        {/* --- [NEW] Tabs to switch between features --- */}
-        <Tabs defaultValue="optimizer" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="optimizer">Image Optimization</TabsTrigger>
-            <TabsTrigger value="analyzer">Image Analysis</TabsTrigger>
-          </TabsList>
+        {appStep === "prompt" && (
+          <PromptStep
+            basePrompt={basePrompt}
+            setBasePrompt={setBasePrompt}
+            attributes={attributes}
+            setAttributes={setAttributes}
+            onSubmit={handleInitialGeneration}
+            isLoading={isLoading}
+          />
+        )}
 
-          {/* --- Tab 1: Image Optimization (Your existing UI) --- */}
-          <TabsContent value="optimizer">
-            {appStep === "prompt" && (
-              <PromptStep
-                basePrompt={basePrompt}
-                setBasePrompt={setBasePrompt}
-                attributes={attributes}
-                setAttributes={setAttributes}
-                onSubmit={handleInitialGeneration}
-                isLoading={isLoading}
-              />
-            )}
-            {appStep === "rating" && (
-              <RatingStep
-                images={initialImages}
-                onSubmit={handleFinalGeneration}
-                isLoading={isLoading}
-              />
-            )}
-            {appStep === "final" && <FinalImageStep imageUrl={finalImageUrl} />}
-          </TabsContent>
+        {appStep === "rating" && (
+          <RatingStep
+            images={initialImages}
+            onSubmit={handleFinalGeneration}
+            isLoading={isLoading}
+          />
+        )}
 
-          {/* --- Tab 2: Image Analysis (Our new UI) --- */}
-          <TabsContent value="analyzer">
-            <AnalysisStep />
-          </TabsContent>
-        </Tabs>
+        {appStep === "final" && (
+          <FinalImageStep imageUrl={finalImageUrl} />
+        )}
       </div>
     </main>
   );

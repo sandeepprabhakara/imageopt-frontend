@@ -1,7 +1,5 @@
 // lib/api.ts
 
-// --- Existing types and functions for Image Optimization (UNCHANGED) ---
-
 // This defines the structure of the data we expect from the backend
 export interface ImageResponse {
   imageUrl: string;
@@ -35,7 +33,13 @@ export async function generateInitialImages(basePrompt: string, attributes: any[
   return response.json();
 }
 
-// Define the structure of the data we will send for the final image
+
+
+// lib/api.ts
+
+// ... (the existing ImageResponse interface and generateInitialImages function are at the top) ...
+
+// NEW: Define the structure of the data we will send for the final image
 interface FeedbackItem {
   attributes: any;
   ratings: {
@@ -45,7 +49,7 @@ interface FeedbackItem {
   };
 }
 
-// The function to call our final generation endpoint
+// NEW: The function to call our final generation endpoint
 export async function generateFinalImage(basePrompt: string, feedbackData: FeedbackItem[]): Promise<string> {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -67,39 +71,3 @@ export async function generateFinalImage(basePrompt: string, feedbackData: Feedb
   const result = await response.json();
   return result.finalImageUrl;
 }
-
-
-// --- [NEW] Types and functions for Image Analysis ---
-
-// Define the structure of the analysis report we expect from the backend
-export interface AnalysisReport {
-  initial_analysis_report: string;
-  ab_simulation?: {
-    top_recommendation: string;
-    final_imagen4_prompt: string;
-    comparative_analysis: string;
-    generated_improved_image_base64: string | null;
-  };
-}
-
-// Function to call our new /analyze-image endpoint
-export const analyzeImage = async (imageFile: File): Promise<AnalysisReport> => {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const formData = new FormData();
-  formData.append("image", imageFile);
-
-  const response = await fetch(`${apiBaseUrl}/analyze-image`, {
-    method: "POST",
-    body: formData,
-    // Note: Do not set the 'Content-Type' header when using FormData with fetch.
-    // The browser sets it automatically with the correct 'boundary' value.
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    // Use the detailed error message from the FastAPI backend if available
-    throw new Error(errorData.detail || "Failed to analyze image");
-  }
-
-  return response.json();
-};
